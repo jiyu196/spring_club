@@ -12,10 +12,13 @@ spring:
     properties:
       hibernate:
         format_sql: true
-      thymeleaf:
+  thymeleaf:
       cache: false
+  profiles:
+    include: oauth
 logging:
   level:
     org.springframework.security.web: trace
     com.kiylab: debug
+
 

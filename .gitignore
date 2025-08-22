@@ -39,3 +39,4 @@ out/
 **/secret/*.yml
 **/secret
 /src/main/resources/application.yml
+/src/main/resources/application-oauth.yaml
