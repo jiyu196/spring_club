@@ -48,13 +48,16 @@ public class ClubAuthMemberDTO extends User implements OAuth2User {
   }
 
   @Override
-  public Map<String, Object> getAttributes() {
-    return this.attr;
+  public Map<String, Object> getAttributes() {  // 키값이 아이디 값이라고 생각하면 됨.
+    return attr == null ? Map.of() : attr;  // 소셜 로그인할 때 기타 속성들을 포함하고 있는
   }
 
   @Override
   public String getName() {
-    return (String) attr.get("email");
+    // 소셜정보가 DB에 저장안되어 있을 때에는 attr에서 가져오고
+    // DB에 저장되어있으면 DB에서 가져온 값으로 사용해도 됨.
+    return attr != null  && attr.get("email") != null ? (String) attr.get("email") : email;
+    // 또는 "sub"
   }
 
   @Override
