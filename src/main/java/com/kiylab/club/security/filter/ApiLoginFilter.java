@@ -1,11 +1,14 @@
 package com.kiylab.club.security.filter;
 
+import com.kiylab.club.security.dto.ClubAuthMemberDTO;
+import com.kiylab.club.security.util.JWTUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
 import net.minidev.json.JSONObject;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,10 +23,12 @@ import java.io.PrintWriter;
 
 @Log4j2
 public class ApiLoginFilter extends AbstractAuthenticationProcessingFilter {
+  private JWTUtil jwtUtil;
 
   // public으로 변경한 이유 -> SecurityConfig에서 사용하기 위해
-  public ApiLoginFilter(String defaultFilterProcessesUrl) {
+  public ApiLoginFilter(String defaultFilterProcessesUrl, JWTUtil jwtUtil) {
     super(defaultFilterProcessesUrl);
+    this.jwtUtil=jwtUtil;
   }
 
   @Override
@@ -32,6 +37,11 @@ public class ApiLoginFilter extends AbstractAuthenticationProcessingFilter {
 
     log.info("----------------------------------");
     log.info("ApiLoginFilter- attempAuthentication");
+
+    // POST로 넘어온 것만 처리하겠다
+    if (!"POST".equalsIgnoreCase(request.getMethod())) {
+      throw new AuthenticationServiceException("Only Post requests are supported..");
+      }
 
     String email = request.getParameter("email");
     String password = request.getParameter("pw");
@@ -54,18 +64,33 @@ public class ApiLoginFilter extends AbstractAuthenticationProcessingFilter {
     log.info("------------------------------------");
     log.info("ApiLoginFilter successfulAuthentication");
 
-    // SecurityCOntext 생성/설정
-    SecurityContext context = SecurityContextHolder.createEmptyContext();
-    context.setAuthentication(authResult);
-    SecurityContextHolder.setContext(context);
+//    // SecurityCOntext 생성/설정
+//    SecurityContext context = SecurityContextHolder.createEmptyContext();
+//    context.setAuthentication(authResult);
+//    SecurityContextHolder.setContext(context);
+//
+//    // 세션에 저장
+//    request.getSession(true )
+//            .setAttribute(
+//                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY
+//                    , context);
+//
+//    response.sendRedirect("/");    // 주석한 이유는 컨텍스트에 저장 안하겠다는 의미에서
 
-    // 세션에 저장
-    request.getSession(true )
-            .setAttribute(
-                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY
-                    , context);
+    String email = ((ClubAuthMemberDTO)authResult.getPrincipal()).getUsername();
+    request.setAttribute("email", email);
 
-    response.sendRedirect("/");
+    String token = null;
+    try {
+      token = jwtUtil.generateToken(email);
+      response.setContentType("text/plain");  // Token은 String데이터라서 plain으로 넣는거
+      response.getOutputStream().write(token.getBytes());
+
+      log.info(token); // 서버랑 전송된 데이터랑 같은지 확인
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.kiylab.club.security.filter.ApiCheckFilter;
 import com.kiylab.club.security.filter.ApiLoginFilter;
 import com.kiylab.club.security.handler.ClubLoginSuccessHandler;
 import com.kiylab.club.security.service.ClubUserDetailsService;
+import com.kiylab.club.security.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http
           , AuthenticationManager authenticationManager) throws Exception {
     // spring security 6이상버전에서 아래와 같이 변경
-    ApiLoginFilter apiLoginFilter = new ApiLoginFilter("/api/login");
+    ApiLoginFilter apiLoginFilter = new ApiLoginFilter("/api/login", jwtUtil());
     // api/login이 왔을 때 이 필터를 거친다
     apiLoginFilter.setAuthenticationManager(authenticationManager);
 
@@ -86,11 +87,16 @@ public class SecurityConfig {
   @Bean
   public ApiCheckFilter apiCheckFilter() {
     // /notes/ 한글자로도 있어야함.
-    return new ApiCheckFilter("/notes/**/*");
+    return new ApiCheckFilter("/notes/**/*", jwtUtil());
   }
 
   @Bean
   public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception{
     return config.getAuthenticationManager();
+  }
+
+  @Bean
+  public JWTUtil jwtUtil() {
+    return new JWTUtil();
   }
 }
