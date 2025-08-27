@@ -1,5 +1,6 @@
 package com.kiylab.club.config;
 
+import com.kiylab.club.repository.ClubMemberRepository;
 import com.kiylab.club.security.filter.ApiCheckFilter;
 import com.kiylab.club.security.filter.ApiLoginFilter;
 import com.kiylab.club.security.handler.ClubLoginSuccessHandler;
@@ -98,5 +99,15 @@ public class SecurityConfig {
   @Bean
   public JWTUtil jwtUtil() {
     return new JWTUtil();
+  }
+
+//  @Bean
+//  public ClubUserDetailsService clubUserDetailsService() {
+//    return new ClubUserDetailsService();
+//  }
+
+  @Bean
+  public ClubMemberRepository clubMemberRepository() {
+    return null;
   }
 }

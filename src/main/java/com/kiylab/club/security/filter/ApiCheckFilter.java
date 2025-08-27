@@ -46,6 +46,9 @@ public class ApiCheckFilter extends OncePerRequestFilter {
       boolean checkHeader = checkAuthHeader(request);
 
       if(checkHeader) {
+        // jwtToken에서 이메일을 가져온 후 처리하는 내용
+        // 인증정보를 관리하는 클래스 SecurityContextHolder
+        // 인증정보를 확인해서 있으면 skip
         filterChain.doFilter(request, response);
         return;
       }  // 다음 필터로 넘어가라 라는 의미로 사용하는거
