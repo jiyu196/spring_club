@@ -1,5 +1,6 @@
 package com.kiylab.club.security.filter;
 
+import com.kiylab.club.security.service.ClubUserDetailsService;
 import com.kiylab.club.security.util.JWTUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,6 +9,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.minidev.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -28,6 +35,9 @@ public class ApiCheckFilter extends OncePerRequestFilter {
     this.jwtUtil = jwtUtil;
   }
   // JWTUtil은 생성자가 그 클래스 안에 하나만 있는 경우니까 autoWired로 해도됨.
+
+  @Autowired
+  private ClubUserDetailsService clubUserDetailsService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request
@@ -87,7 +97,27 @@ public class ApiCheckFilter extends OncePerRequestFilter {
       try {
         String email = jwtUtil.validateAndExtract(authHeader.substring(7));
         log.info("validate result: {}", email);
-        checkResult = email.length() > 0;    // 0보다 크면 true값이 전달
+
+        if (email.length() > 0) {
+          checkResult = true;    // 0보다 크면 true값이 전달
+          // jwtToken에 저장된 id(email, username) 정보를 가지고
+          // 인증 및 인가내용을 securityContextHolder에 구성하는 부분
+
+          // 인증된 정보가 userDetails 객체에 담김
+          UserDetails userDetails = clubUserDetailsService.loadUserByUsername(email);
+
+          UsernamePasswordAuthenticationToken authToken =
+                  new UsernamePasswordAuthenticationToken(
+                          userDetails,
+                          null,   // 비밀번호를 확인만하기 때문에 null로줌
+                          userDetails.getAuthorities());
+
+          authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+          // SecurityContextHolder에 저장
+          SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        } // 백앤드 안에서 내부적으로 사용하는 토큰
 
       } catch (Exception e) {
         e.printStackTrace();

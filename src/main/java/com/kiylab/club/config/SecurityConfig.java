@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -24,6 +25,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+@EnableMethodSecurity(securedEnabled = true)
 @Configuration
 @EnableWebSecurity
 @Log4j2
@@ -59,7 +61,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((auth) -> {
               auth.requestMatchers("/sample/all").permitAll()//누구나 로그인없이
-                      .requestMatchers("/notes/**").permitAll()
+                      .requestMatchers("/notes/**").hasRole("USER")
                       .requestMatchers("/sample/member").hasRole("USER") //USER이상
                       .requestMatchers("/sample/admin").hasRole("ADMIN")
                       .requestMatchers("/member/modify", "/member/modify/**").hasRole("USER")
@@ -88,7 +90,7 @@ public class SecurityConfig {
   @Bean
   public ApiCheckFilter apiCheckFilter() {
     // /notes/ 한글자로도 있어야함.
-    return new ApiCheckFilter("/notes/**/*", jwtUtil());
+    return new ApiCheckFilter("/notes/**/", jwtUtil());  // /notes/**/* 원래이렇게 되어있었음
   }
 
   @Bean
@@ -101,13 +103,13 @@ public class SecurityConfig {
     return new JWTUtil();
   }
 
-//  @Bean
-//  public ClubUserDetailsService clubUserDetailsService() {
-//    return new ClubUserDetailsService();
-//  }
-
   @Bean
-  public ClubMemberRepository clubMemberRepository() {
-    return null;
+  public ClubUserDetailsService clubUserDetailsService(ClubMemberRepository clubMemberRepository) {
+    return new ClubUserDetailsService(clubMemberRepository);
   }
+
+//  @Bean
+//  public ClubMemberRepository clubMemberRepository() {
+//    return null;
+//  }
 }

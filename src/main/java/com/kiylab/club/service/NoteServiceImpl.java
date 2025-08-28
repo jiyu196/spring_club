@@ -5,6 +5,7 @@ import com.kiylab.club.entity.Note;
 import com.kiylab.club.repository.NoteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,14 +29,19 @@ public class NoteServiceImpl implements NoteService{
   }
 
   @Override
+  @PostAuthorize("returnObject.writerEmail == authentication.principal.email")
   public NoteDTO get(Long num) {
     Optional<Note> result = noteRepository.getWithWriter(num);
 
-    if(result.isPresent()){
-      return entityToDto(result.get());
-    }
+//    if(result.isPresent()){
+//      return entityToDto(result.get());
+//    }
+//
+//    return null;
 
-    return null;
+    return noteRepository.getWithWriter(num)
+            .map(this::entityToDto)  // (noteDTO) -> entityToDTO(noteDTO)
+            .orElse(null);
   }
 
   @Override
